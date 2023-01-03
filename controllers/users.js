@@ -1,17 +1,33 @@
+import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import User from '../models/user.js'
 
 let users = []
 
-export const getUsers = (req, res) =>{
-    res.send(users)
+export const getUsers = async (req, res) =>{
+    try {
+        const Users = await User.find();
+
+        res.status(200).json(Users);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
 }
 
-export const addUser = (req, res) => {
-    const user = req.body
+export const addUser = async (req, res) => {
+    const body = req.body
 
-    users.push({ ...user, id: uuidv4()});
+    console.log(User())
+    let newUser = new User(body);
+    console.log(newUser);
 
-    res.send(`User with the name ${user.firstName} was added to the DB`)
+    try{
+        await newUser.save();
+
+        res.status(201).json(newUser);
+    } catch (error){
+        res.status(409).json({ message: error.message });
+    }
 }
 
 export const getUser = (req,res) => {
@@ -21,12 +37,14 @@ export const getUser = (req,res) => {
     res.send(foundUser);
 }
 
-export const deleteUser = (req, res) => {
+export const deleteUser = async (req, res) => {
     const { id } = req.params;
 
-    users = users.filter((user) => user.id !== id);
+    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).send('No user with that id');
 
-    res.send(`User with the id ${id} deleted from the DB`)
+    await User.findByIdAndRemove(id);
+
+    res.json({ message: 'Post deleted sucessfuly'});
 }
 
 export const updateUser = (req, res) => {
