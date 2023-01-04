@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
 import User from '../models/user.js'
 
 let users = []
@@ -15,11 +14,9 @@ export const getUsers = async (req, res) =>{
 }
 
 export const addUser = async (req, res) => {
-    const body = req.body
+    const body = req.body;
 
-    console.log(User())
     let newUser = new User(body);
-    console.log(newUser);
 
     try{
         await newUser.save();
@@ -30,32 +27,34 @@ export const addUser = async (req, res) => {
     }
 }
 
-export const getUser = (req,res) => {
+export const getUser = async (req,res) => {
     const { id } = req.params;
+    try {
+        const Users = await User.findById(id);
 
-    const foundUser = users.find((user) => user.id === id);
-    res.send(foundUser);
+        res.status(200).json(Users);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
 }
 
 export const deleteUser = async (req, res) => {
-    const { id } = req.params;
+    const { id: _id } = req.params;
 
-    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).send('No user with that id');
+    if(!mongoose.Types.ObjectId.isValid(_id)) return res.status(404).send('No user with that id');
 
-    await User.findByIdAndRemove(id);
+    await User.findByIdAndRemove(_id);
 
     res.json({ message: 'Post deleted sucessfuly'});
 }
 
-export const updateUser = (req, res) => {
-    const { id } = req.params;
-    const { fistName, lastName, age } = req.body;
+export const updateUser = async (req, res) => {
+    const { id: _id } = req.params;
+    const user = req.body;
 
-    const user = users.find((user) => user.id == id);
+    if(!mongoose.Types.ObjectId.isValid(_id)) return res.status(404).send('No user with that id');
 
-    if(fistName) user.firstName = firstName;
-    if(lastName) user.lastName = lastName;
-    if(age) user.age = age;
-    
-    res.send(`User with the id ${id} has been updated`)
+    const updatedUser = await User.findByIdAndUpdate(_id, { ...user, _id }, {new: true});
+
+    res.json(updateUser);
 }
