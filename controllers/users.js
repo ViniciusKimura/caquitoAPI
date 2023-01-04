@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import User from '../models/user.js'
+import User from '../models/user.js';
+import bcrypt from 'bcrypt';
 
 let users = []
 
@@ -28,9 +29,11 @@ export const addUser = async (req, res) => {
 }
 
 export const getUser = async (req,res) => {
-    const { id } = req.params;
+    const { id: _id } = req.params;
     try {
-        const Users = await User.findById(id);
+        if(!mongoose.Types.ObjectId.isValid(_id)) return res.status(404).send('No user with that id');
+
+        const Users = await User.findById(_id);
 
         res.status(200).json(Users);
     } catch (error) {
@@ -45,7 +48,7 @@ export const deleteUser = async (req, res) => {
 
     await User.findByIdAndRemove(_id);
 
-    res.json({ message: 'Post deleted sucessfuly'});
+    res.json({ message: 'User deleted sucessfuly'});
 }
 
 export const updateUser = async (req, res) => {
@@ -57,4 +60,21 @@ export const updateUser = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(_id, { ...user, _id }, {new: true});
 
     res.json(updateUser);
+}
+
+export const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const existingUser = await User.findOne({ email });
+
+        if (!existingUser) return res.status(404).send('No user with that email');
+
+        if (existingUser.password != password) return res.status(404).send('Wrong credentials');
+
+        res.json({ message: "login sucessfuly" })
+    } catch (error) {
+        console.log(error);
+    }
+    
 }
